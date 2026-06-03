@@ -1,4 +1,3 @@
--- AutoParry v2.13 — 删除信心相关字段，保留v2.12其余全部优化
 local Players=game:GetService("Players");local Workspace=game:GetService("Workspace");local UIS=game:GetService("UserInputService");local CoreGui=game:GetService("CoreGui");local VI=game:GetService("VirtualInputManager");local HttpService=game:GetService("HttpService");local TS=game:GetService("TweenService");local rootDir="ProjectAuto";local gameDir=rootDir.."/"..tostring(game.GameId or game.Name or "0")
 local LP=Players.LocalPlayer;local pingSamples={};local currentPing=0
 local STATE={LearningMode=false,AutoParry=false,ParryKey=Enum.KeyCode.F,KeyBindName="F",ConfThreshold=0.35,Active=true,UIVisToggleKey=Enum.KeyCode.RightShift,UIVisKeyName="RightShift",MaxRange=20,FacingCheck=false,FreezeOnLearn=false,AutoTiming=false}
@@ -18,7 +17,7 @@ local function median(t)
 end
 local function getSN(c)if not c then return nil end;local p=Players:GetPlayerFromCharacter(c);return p and p.Name or c.Name end
 local function getST(c)if not c then return"NPC"end;if type(c)=="string"then return(Players:FindFirstChild(c)and"Player"or"NPC")end;return(Players:GetPlayerFromCharacter(c)and"Player"or"NPC")end
--- 缓存 getSP 结果避免反复 pcall
+
 local _spCached=nil
 local function getSP()
 	if _spCached and _spCached.Parent then return _spCached end
@@ -158,7 +157,7 @@ local function debounceBuildTree()
 	end)
 end
 
--- ====== 自动格挡（含 ping 补偿 + per-source cooldown） ======
+-- ====== 自动格挡
 local function autoParry(animTrack,la,sn,an)
 	local now=os.clock()
 	local last=lastParryTime[sn]or 0;if now-last<autoParryCooldown then return end;lastParryTime[sn]=now
@@ -171,7 +170,7 @@ local function autoParry(animTrack,la,sn,an)
 	end)
 end
 
--- ====== 受伤害回溯（事件驱动，精确到帧） ======
+-- ====== 受伤害回溯======
 local lastHealth=nil
 local function onHit(now,char)
 	if not STATE.Active then return end
@@ -503,7 +502,7 @@ setBtn.MouseButton1Click:Connect(function()settingsPanel.Visible=not settingsPan
 E.sg=sg;E.win=win
 UIS.InputBegan:Connect(function(input,processed)if STATE.UIVisToggleKey and input.KeyCode==STATE.UIVisToggleKey and win then win.Visible=not win.Visible end;if processed then return end;if STATE.ParryKey and input.KeyCode==STATE.ParryKey then onPlayerParry()end end)
 
--- ====== BuildTree（修复 shortId bug） ======
+-- ====== BuildTree======
 function E:BuildTree()
 	tree:ClearAllChildren();ui("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=tree})
 	local sources={}
@@ -563,7 +562,7 @@ function E:BuildTree()
 			end)
 			local delAnim=ui("TextButton",{Text="✕",Size=UDim2.new(0,18,0,18),Position=UDim2.new(0,226,0,2),Font=Enum.Font.SourceSansBold,TextSize=11,BackgroundColor3=Color3.fromRGB(55,30,30),TextColor3=Color3.fromRGB(200,90,90),BorderSizePixel=0,Parent=aRow,Active=true,AutoButtonColor=false});cr(3).Parent=delAnim
 			delAnim.MouseButton1Click:Connect(function()learnedAnims[aid]=nil;saveSource(sn);E:BuildTree()end)
-			-- 参数面板（折叠用 Visible 控制，自动布局）
+			-- 参数面板
 			pSub=ui("Frame",{Size=UDim2.new(1,-6,0,40),Position=UDim2.new(0,3,0,24),BackgroundTransparency=1,Visible=pe,Parent=box})
 			local tr=ui("Frame",{Size=UDim2.new(1,0,0,20),Position=UDim2.new(0,0,0,0),BackgroundTransparency=1,Parent=pSub})
 			local tl=lbl(string.format("时机:%d%%",math.floor((a.avgTiming or 0.5)*100)),{Size=UDim2.new(0,70,0,18),Position=UDim2.new(0,0,0,1),TextSize=11,TextColor3=Color3.fromRGB(160,200,230),TextXAlignment=Enum.TextXAlignment.Left,Parent=tr})
